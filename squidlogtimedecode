@@ -1,0 +1,53 @@
+#!/usr/bin/perl
+# a script which reads the squid access log and prints the time stamp
+# in a friendly format.
+# (c) 2018 Paul Mansfield, released under the GPL-latest
+
+
+if (defined $ARGV[0] && $ARGV[0] eq '--help')
+{
+        print "Usage: \"squidlogtimedecode [file name]\"\n";
+        exit 1;
+}
+
+my $squidLog = '/var/log/squid/access.log';
+
+if (defined $ARGV[0] && $ARGV[0] ne '')
+{
+	$squidLog =  $ARGV[0];
+}
+
+print "squid log file is $squidLog\n";
+
+my $FH;
+if ($squidLog eq '-')
+{
+	$FH = *stdin;
+}
+else
+{
+	open (FHH, "<$squidLog") or die "Error, failed to open $squidLog for reading\n";
+	$FH = \*FHH;
+}
+
+my $squidSecs = 0, $squidSubSecs = 0, $logLine = '';
+while (<$FH>)
+{
+	chomp;
+	$_ =~ /^(\d+)\.(\d+)\s(.*)$/;
+	$squidSecs = $1;
+	$squidSubSecs = $2;
+	$logLine = $3;
+	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($squidSecs);
+
+	++$mon;
+	$mon = $mon < 10 ? "0$mon" : $mon;
+	$year = 1900 + $year;
+	$mday = $mday < 10 ? "0$mday" : $mday;
+	$sec = $sec < 10 ? "0$sec" : $sec;
+	$min = $min < 10 ? "0$min" : $min;
+	$hour = $hour < 10 ? "0$hour" : $hour;
+	print "$year$mon$mday $hour:$min:$sec.$squidSubSecs  $logLine\n";
+
+}
+
