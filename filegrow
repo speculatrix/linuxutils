@@ -1,0 +1,65 @@
+#!/bin/bash
+# a simple utility to watch a file's size change over time
+# (c) 2018 P Mansfield released under the GPL latest licence
+#
+# versions
+# 20180918 - added copyright, used bash internal math not expr
+# 20170810 - first version
+
+
+# default sleep 1 sec
+PERIOD=1
+if [ "$1" == "-i" ] ; then
+	shift
+	PERIOD=$1
+	shift
+fi
+
+FILENAME="$1"
+
+EXPECTED="$2"
+
+KB10=$(( 1024 * 10 ))
+MB10=$(( 1024 * 1024 * 10 ))
+
+OLD=-1
+while [ 1 ] ; do
+	DDD=`date +%H:%M:%S`
+	NEW=`stat -c '%s' "$FILENAME"`
+	sleep $PERIOD
+	if [ $OLD -ne -1 ] ; then
+		echo -n "Time: $DDD	Size: $NEW B  "
+		NEWKB=$(( $NEW / 1024 ))
+		NEWMB=$(( $NEWKB / 1024 ))
+		echo -n "$NEWMB  MiB	"
+
+		echo -n "Growth: "
+		DIFF=$(( $NEW - $OLD ))
+		DIFFKB=$(( $DIFF / 1024 ))
+		DIFFMB=$(( $DIFFKB / 1024 ))
+
+		if [ $DIFF -gt $KB10 ] ; then
+			if [ $DIFF -gt $MB10 ] ; then
+				echo -n "$DIFFMB MiB	"
+			else
+				echo -n "$DIFFKB KiB	"
+			fi
+		else
+			echo -n "$DIFF B	"
+		fi
+
+
+		LEFTKB=$(( $EXPECTED - $NEWKB ))
+		echo -n "Remainder: $LEFTKB KB	"
+
+		if [ $DIFFKB -ne 0 -a $LEFTKB -ne 0 ] ; then
+			DRTN=$(( $PERIOD * $LEFTKB / $DIFFKB ))
+			echo -n "Finish: $DRTN s"
+		fi
+
+		echo ""
+	fi
+	OLD=$NEW
+done
+
+
