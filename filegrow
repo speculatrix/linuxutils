@@ -3,9 +3,16 @@
 # (c) 2018 P Mansfield released under the GPL latest licence
 #
 # versions
-# 20180918 - added copyright, used bash internal math not expr
+# 20180919 - fixed EXPECTED logic
+# 20180918 - used bash internal math not expr
 # 20170810 - first version
 
+
+if [ "$1" == "" -o "$1" == "-h" ] ; then
+	echo "Usage: filegrow filename {expected}"
+	echo "expected is the expected file size, in KB - optional"
+	exit 0
+fi
 
 # default sleep 1 sec
 PERIOD=1
@@ -16,16 +23,28 @@ if [ "$1" == "-i" ] ; then
 fi
 
 FILENAME="$1"
+if [ ! -f "$FILENAME" ] ; then
+	echo "Error, $FILENAME not found"
+	exit 1
+fi
 
-EXPECTED="$2"
+if [ "$2" != "" ] ; then
+	EXPECTED="$2"
+else
+	EXPECTED=0
+fi
 
 KB10=$(( 1024 * 10 ))
 MB10=$(( 1024 * 1024 * 10 ))
 
 OLD=-1
 while [ 1 ] ; do
-	DDD=`date +%H:%M:%S`
+	if [ ! -f "$FILENAME" ] ; then
+		echo "File has disappeared"
+		exit 0
+	fi
 	NEW=`stat -c '%s' "$FILENAME"`
+	DDD=`date +%H:%M:%S`
 	sleep $PERIOD
 	if [ $OLD -ne -1 ] ; then
 		echo -n "Time: $DDD	Size: $NEW B  "
@@ -49,12 +68,14 @@ while [ 1 ] ; do
 		fi
 
 
-		LEFTKB=$(( $EXPECTED - $NEWKB ))
-		echo -n "Remainder: $LEFTKB KB	"
+		if [ "$EXPECTED" -gt 0 ] ; then
+			LEFTKB=$(( $EXPECTED - $NEWKB ))
+			echo -n "Remainder: $LEFTKB KB	"
 
-		if [ $DIFFKB -ne 0 -a $LEFTKB -ne 0 ] ; then
-			DRTN=$(( $PERIOD * $LEFTKB / $DIFFKB ))
-			echo -n "Finish: $DRTN s"
+			if [ $DIFFKB -ne 0 -a $LEFTKB -ne 0 ] ; then
+				DRTN=$(( $PERIOD * $LEFTKB / $DIFFKB ))
+				echo -n "Finish: $DRTN s"
+			fi
 		fi
 
 		echo ""
