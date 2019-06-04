@@ -16,3 +16,12 @@ seeing how fast a log file is growing and when it will reach a specific size.
 
 a script which reads the squid access log and prints the time stamp
 in a friendly format.
+
+
+## ssh_agent_finder
+
+put this in /usr/local/bin and call it in your .bashrc or .profile where
+it will try and find a working ssh agent (whether you're ssh'd in with
+agent forwarding) or there's broken ssh environment vars and needs to 
+start a new one.
+
