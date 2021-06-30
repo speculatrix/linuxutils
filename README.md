@@ -18,10 +18,27 @@ a script which reads the squid access log and prints the time stamp
 in a friendly format.
 
 
-## ssh_agent_finder
+## ssh_agent_finder.sh
 
-put this in /usr/local/bin and call it in your .bashrc or .profile where
+put this in /usr/local/bin and call it in your .bashrc or .profile like
+this:
+```
+. /usr/local/bin/ssh_agent_finder.sh
+```
+
 it will try and find a working ssh agent (whether you're ssh'd in with
 agent forwarding) or there's broken ssh environment vars and needs to 
 start a new one.
+
+also, you can switch between ssh agents, e.g.
+
+```
+. /usr/local/bin/ssh_agent_finder.sh work
+```
+
+or
+
+```
+. /usr/local/bin/ssh_agent_finder.sh home
+```
 
