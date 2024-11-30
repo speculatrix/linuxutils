@@ -10,6 +10,16 @@ if [ $FILECOUNT -gt 0 ] ; then
 	done
 fi
 
+FILECOUNT=`ls | grep HIF | wc -l`
+if [ $FILECOUNT -gt 0 ] ; then
+	for X in *HIF
+	do
+		echo "Renaming HIF to hif"
+		Y=`echo $X|sed -e 's/HIF/hif/'`
+		mv -n $X $Y
+	done
+fi
+
 FILECOUNT=`ls | grep JPG | wc -l`
 if [ $FILECOUNT -gt 0 ] ; then
 	for X in *JPG
