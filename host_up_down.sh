@@ -1,6 +1,6 @@
 #!/bin/bash
 # host_up_down pings and reports when the host stops or starts reponding
-# licensed under GPLv4
+# licensed under GPLv3
 
 PERIOD=2		# default sleep period
 LOGFAC="daemon.warn"	# log with this facility.priority
