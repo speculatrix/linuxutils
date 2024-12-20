@@ -71,7 +71,7 @@ while /bin/true ; do
 		NEW_STATE_TSTAMP=$( date +%s)
 		PERIOD=$(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP ))
 		[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG responded to $HOSTNAME - state lasted $PERIOD seconds"
-		echo "$YMDHMS target $TARG responded - state lasted $PERIOD seconds"
+		echo "$YMDHMS target $TARG responded - down state lasted $PERIOD seconds"
 		STATE=1
 		NEW_STATE_TSTAMP="$LAST_STATE_TSTAMP"
 	fi
@@ -80,7 +80,7 @@ while /bin/true ; do
 		NEW_STATE_TSTAMP=$( date +%s)
 		PERIOD=$(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP ))
 		[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG failed to responded to $HOSTNAME - state lasted $PERIOD seconds"
-		echo "$YMDHMS target $TARG failed to respond - state lasted $PERIOD seconds"
+		echo "$YMDHMS target $TARG failed to respond - up state lasted $PERIOD seconds"
 		STATE=0
 		NEW_STATE_TSTAMP="$LAST_STATE_TSTAMP"
 	fi
