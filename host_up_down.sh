@@ -59,6 +59,7 @@ fi
 
 #### main
 STATE=2			# 0 = down, 1 = up, 2= unknown
+LAST_STATE_TSTAMP=$( date +%s)
 while /bin/true ; do
 	YMDHMS=$( date +%Y%m%d-%H:%M:%S )
 	ping -c 2 -n -w 2 "$TARG" > /dev/null
@@ -66,15 +67,21 @@ while /bin/true ; do
 	PINGRES=$?
 
 	if [ $PINGRES -eq 0 ] && [ $STATE -ne 1 ] ; then
-		[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG responded to $HOSTNAME - state lasted $(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP )) seconds"
-		echo "$YMDHMS target $TARG responded - state lasted $(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP )) seconds"
+		NEW_STATE_TSTAMP=$( date +%s)
+		PERIOD=$(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP ))
+		[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG responded to $HOSTNAME - state lasted $PERIOD seconds"
+		echo "$YMDHMS target $TARG responded - state lasted $PERIOD seconds"
 		STATE=1
+		NEW_STATE_TSTAMP="$LAST_STATE_TSTAMP"
 	fi
 
 	if [ $PINGRES -ne 0 ] && [ $STATE -ne 0 ] ; then
-		[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG failed to responded to $HOSTNAME - state lasted $(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP )) seconds"
-		echo "$YMDHMS target $TARG failed to respond - state lasted $(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP)) seconds"
+		NEW_STATE_TSTAMP=$( date +%s)
+		PERIOD=$(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP ))
+		[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG failed to responded to $HOSTNAME - state lasted $PERIOD seconds"
+		echo "$YMDHMS target $TARG failed to respond - state lasted $PERIOD seconds"
 		STATE=0
+		NEW_STATE_TSTAMP="$LAST_STATE_TSTAMP"
 	fi
 
 	[ "$DBG_LEVEL" -gt 0 ] && echo "Sleeping for $PERIOD"
