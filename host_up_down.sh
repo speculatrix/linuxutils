@@ -6,7 +6,7 @@ LOGFAC="daemon.warn"	# log with this facility.priority
 DBG_LEVEL=0
 
 function print_usage() {
-        cat <<EOF
+	cat <<EOF
 Usage:
     $0 [-h] [-d] [-l loghost] [-p period] -t target
 
@@ -30,18 +30,18 @@ while [ "$#" -gt 0 ] && [ "$1" != "" ] ; do
 			print_usage
 			exit 0
 		;;
-                "-l")
-                        shift
-                        LOGHOST="$1"
-                ;;
-                "-p")
-                        shift
-                        PERIOD="$1"
-                ;;
-                "-t")
-                        shift
-                        TARG="$1"
-                ;;
+		"-l")
+			shift
+			LOGHOST="$1"
+		;;
+		"-p")
+			shift
+			PERIOD="$1"
+		;;
+		"-t")
+			shift
+			TARG="$1"
+		;;
 		# catchall
 		*)
 			echo "Error, unknown option '$1'" > /dev/stderr
@@ -61,19 +61,19 @@ fi
 STATE=2			# 0 = down, 1 = up, 2= unknown
 while /bin/true ; do
 	YMDHMS=$( date +%Y%m%d-%H:%M:%S )
-	ping -c 1 -n -w 2 "$TARG" > /dev/null
+	ping -c 2 -n -w 2 "$TARG" > /dev/null
 	#ping -c 1 -n -w 2 "$TARG" | grep -q " 0% packet loss"
 	PINGRES=$?
 
 	if [ $PINGRES -eq 0 ] && [ $STATE -ne 1 ] ; then
-		[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG responded to $HOSTNAME"
-		echo "$YMDHMS target $TARG responded"
+		[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG responded to $HOSTNAME - state lasted $(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP )) seconds"
+		echo "$YMDHMS target $TARG responded - state lasted $(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP )) seconds"
 		STATE=1
 	fi
 
 	if [ $PINGRES -ne 0 ] && [ $STATE -ne 0 ] ; then
-		[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG failed to responded to $HOSTNAME"
-		echo "$YMDHMS target $TARG failed to respond"
+		[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG failed to responded to $HOSTNAME - state lasted $(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP )) seconds"
+		echo "$YMDHMS target $TARG failed to respond - state lasted $(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP)) seconds"
 		STATE=0
 	fi
 
