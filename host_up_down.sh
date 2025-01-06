@@ -78,7 +78,7 @@ while /bin/true ; do
 	if [ $PINGRES -eq 0 ] && [ $STATE -ne 1 ] ; then
 		NEW_STATE_TSTAMP=$( date +%s)
 		DURATION=$(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP ))
-		NEW_STATE_TSTAMP="$LAST_STATE_TSTAMP"
+		LAST_STATE_TSTAMP="$NEW_STATE_TSTAMP"
 		if [ "$STATE" -ne 2 ] ; then
 			if [ "$DURATION" -gt "$MAX_DOWN" ] ; then
 				MAX_DOWN="$DURATION"
@@ -92,7 +92,7 @@ while /bin/true ; do
 	if [ $PINGRES -ne 0 ] && [ $STATE -ne 0 ] ; then
 		NEW_STATE_TSTAMP=$( date +%s)
 		DURATION=$(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP ))
-		NEW_STATE_TSTAMP="$LAST_STATE_TSTAMP"
+		LAST_STATE_TSTAMP="$NEW_STATE_TSTAMP"
 		if [ "$STATE" -ne 2 ] ; then
 			if [ "$DURATION" -gt "$MAX_UP" ] ; then
 				MAX_UP="$DURATION"
