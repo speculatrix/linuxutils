@@ -2,7 +2,9 @@
 # host_up_down pings and reports when the host stops or starts reponding
 # licensed under GPLv3
 
-PERIOD=2		# default sleep period
+SLEEP_PERIOD=2		# default sleep period
+PING_COUNT=2		# how many pings to send
+PING_WAIT=2		# how long to wait for a reply
 LOGFAC="daemon.warn"	# log with this facility.priority
 DBG_LEVEL=0
 
@@ -15,7 +17,7 @@ Usage:
 	-h	optional, print help (you are here)
 	-l	optional, log host, send a syslog message here, e.g. 192.168.1.1
 	-t	mandatory, ping target, e.g. ipv6.google.com
-	-p	optionl, default period is $PERIOD secs
+	-p	optional, default period is $SLEEP_PERIOD secs
 EOF
 
 }
@@ -37,7 +39,7 @@ while [ "$#" -gt 0 ] && [ "$1" != "" ] ; do
 		;;
 		"-p")
 			shift
-			PERIOD="$1"
+			SLEEP_PERIOD="$1"
 		;;
 		"-t")
 			shift
@@ -61,32 +63,33 @@ fi
 #### main
 STATE=2			# 0 = down, 1 = up, 2= unknown
 LAST_STATE_TSTAMP=$( date +%s)
+echo "Sleep count $PING_COUNT, sleep $SLEEP_PERIOD, wait $PING_WAIT"
 while /bin/true ; do
 	YMDHMS=$( date +%Y%m%d-%H:%M:%S )
-	ping -c 2 -n -w 2 "$TARG" > /dev/null
-	#ping -c 1 -n -w 2 "$TARG" | grep -q " 0% packet loss"
+	ping -c "$PING_COUNT" -n -w "$PING_WAIT" "$TARG" > /dev/null
+	#ping -c "$PING_COUNT" -n -w "$PING_WAIT" "$TARG" | grep -q " 0% packet loss"
 	PINGRES=$?
 
 	if [ $PINGRES -eq 0 ] && [ $STATE -ne 1 ] ; then
 		NEW_STATE_TSTAMP=$( date +%s)
-		PERIOD=$(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP ))
-		[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG responded to $HOSTNAME - state lasted $PERIOD seconds"
-		echo "$YMDHMS target $TARG responded - down state lasted $PERIOD seconds"
+		DURATION=$(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP ))
+		[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG responded to $HOSTNAME - state lasted $DURATION seconds"
+		echo "$YMDHMS target $TARG responded - down state lasted $DURATION seconds"
 		STATE=1
 		NEW_STATE_TSTAMP="$LAST_STATE_TSTAMP"
 	fi
 
 	if [ $PINGRES -ne 0 ] && [ $STATE -ne 0 ] ; then
 		NEW_STATE_TSTAMP=$( date +%s)
-		PERIOD=$(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP ))
-		[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG failed to responded to $HOSTNAME - state lasted $PERIOD seconds"
-		echo "$YMDHMS target $TARG failed to respond - up state lasted $PERIOD seconds"
+		DURATION=$(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP ))
+		[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG failed to responded to $HOSTNAME - state lasted $DURATION seconds"
+		echo "$YMDHMS target $TARG failed to respond - up state lasted $DURATION seconds"
 		STATE=0
 		NEW_STATE_TSTAMP="$LAST_STATE_TSTAMP"
 	fi
 
-	[ "$DBG_LEVEL" -gt 0 ] && echo "Sleeping for $PERIOD"
-	sleep "$PERIOD"
+	[ "$DBG_LEVEL" -gt 0 ] && echo "Sleeping for $SLEEP_PERIOD"
+	sleep "$SLEEP_PERIOD"
 done
 
 # end host_up_down.sh
