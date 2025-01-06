@@ -62,7 +62,11 @@ fi
 
 #### main
 STATE=2			# 0 = down, 1 = up, 2= unknown
+MAX_DOWN=0
+MAX_UP=0
+
 LAST_STATE_TSTAMP=$( date +%s)
+
 echo "Sleep count $PING_COUNT, sleep $SLEEP_PERIOD, wait $PING_WAIT"
 while /bin/true ; do
 	YMDHMS=$( date +%Y%m%d-%H:%M:%S )
@@ -74,19 +78,29 @@ while /bin/true ; do
 	if [ $PINGRES -eq 0 ] && [ $STATE -ne 1 ] ; then
 		NEW_STATE_TSTAMP=$( date +%s)
 		DURATION=$(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP ))
-		[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG responded to $HOSTNAME - state lasted $DURATION seconds"
-		echo " target $TARG responded - down state lasted $DURATION seconds"
-		STATE=1
 		NEW_STATE_TSTAMP="$LAST_STATE_TSTAMP"
+		if [ "$STATE" -ne 2 ] ; then
+			if [ "$DURATION" -gt "$MAX_DOWN" ] ; then
+				MAX_DOWN="$DURATION"
+			fi
+			[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG responded to $HOSTNAME - down state lasted $DURATION seconds, max down $MAX_DOWN"
+			echo " target $TARG responded - down state lasted $DURATION seconds"
+		fi
+		STATE=1
 	fi
 
 	if [ $PINGRES -ne 0 ] && [ $STATE -ne 0 ] ; then
 		NEW_STATE_TSTAMP=$( date +%s)
 		DURATION=$(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP ))
-		[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG failed to responded to $HOSTNAME - state lasted $DURATION seconds"
-		echo " target $TARG failed to respond - up state lasted $DURATION seconds"
-		STATE=0
 		NEW_STATE_TSTAMP="$LAST_STATE_TSTAMP"
+		if [ "$STATE" -ne 2 ] ; then
+			if [ "$DURATION" -gt "$MAX_UP" ] ; then
+				MAX_UP="$DURATION"
+			fi
+			[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG failed to responded to $HOSTNAME - up state lasted $DURATION seconds, max up $MAX_UP"
+			echo " target $TARG failed to respond - up state lasted $DURATION seconds"
+		fi
+		STATE=0
 	fi
 
 	echo -n -e "\r"
