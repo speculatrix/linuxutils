@@ -5,8 +5,8 @@
 mapfile -t FILELIST < <( ls )
 for FILENAME in "${FILELIST[@]}" ; do
 	echo "$FILENAME" | grep -q " "
-	if [ $? -eq 0 ] ; then
-		NEWFILENAME=$( echo $FILENAME | tr ' ' '_'  )
+	if [ "$?" -eq 0 ] ; then
+		NEWFILENAME=$( echo "$FILENAME" | tr ' ' '_'  )
 		echo "mv \"$FILENAME\" \"$NEWFILENAME\""
 		mv "$FILENAME" "$NEWFILENAME"
 	fi
