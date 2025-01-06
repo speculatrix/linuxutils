@@ -70,11 +70,12 @@ while /bin/true ; do
 	#ping -c "$PING_COUNT" -n -w "$PING_WAIT" "$TARG" | grep -q " 0% packet loss"
 	PINGRES=$?
 
+	echo -n "$YMDHMS"
 	if [ $PINGRES -eq 0 ] && [ $STATE -ne 1 ] ; then
 		NEW_STATE_TSTAMP=$( date +%s)
 		DURATION=$(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP ))
 		[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG responded to $HOSTNAME - state lasted $DURATION seconds"
-		echo "$YMDHMS target $TARG responded - down state lasted $DURATION seconds"
+		echo " target $TARG responded - down state lasted $DURATION seconds"
 		STATE=1
 		NEW_STATE_TSTAMP="$LAST_STATE_TSTAMP"
 	fi
@@ -83,11 +84,12 @@ while /bin/true ; do
 		NEW_STATE_TSTAMP=$( date +%s)
 		DURATION=$(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP ))
 		[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG failed to responded to $HOSTNAME - state lasted $DURATION seconds"
-		echo "$YMDHMS target $TARG failed to respond - up state lasted $DURATION seconds"
+		echo " target $TARG failed to respond - up state lasted $DURATION seconds"
 		STATE=0
 		NEW_STATE_TSTAMP="$LAST_STATE_TSTAMP"
 	fi
 
+	echo -n -e "\r"
 	[ "$DBG_LEVEL" -gt 0 ] && echo "Sleeping for $SLEEP_PERIOD"
 	sleep "$SLEEP_PERIOD"
 done
