@@ -84,7 +84,7 @@ while /bin/true ; do
 				MAX_DOWN="$DURATION"
 			fi
 			[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG responded to $HOSTNAME - down state lasted $DURATION seconds, max down $MAX_DOWN"
-			echo " target $TARG responded - down state lasted $DURATION seconds"
+			echo " target $TARG responded - down state lasted $DURATION seconds, max down $MAX_DOWN"
 		fi
 		STATE=1
 	fi
@@ -98,7 +98,7 @@ while /bin/true ; do
 				MAX_UP="$DURATION"
 			fi
 			[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG failed to responded to $HOSTNAME - up state lasted $DURATION seconds, max up $MAX_UP"
-			echo " target $TARG failed to respond - up state lasted $DURATION seconds"
+			echo " target $TARG failed to respond - up state lasted $DURATION seconds, max up $MAX_UP"
 		fi
 		STATE=0
 	fi
