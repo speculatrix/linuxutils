@@ -97,8 +97,8 @@ while /bin/true ; do
 			if [ "$DURATION" -gt "$MAX_UP" ] ; then
 				MAX_UP="$DURATION"
 			fi
-			[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG failed to responded to $HOSTNAME - up state lasted $DURATION seconds, max up $MAX_UP"
-			echo " target $TARG failed to respond - up state lasted $DURATION seconds, max up $MAX_UP"
+			[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG unresponsive to $HOSTNAME - up state lasted $DURATION seconds, max up $MAX_UP"
+			echo " target $TARG unresponsive - up state lasted $DURATION seconds, max up $MAX_UP"
 		fi
 		STATE=0
 	fi
