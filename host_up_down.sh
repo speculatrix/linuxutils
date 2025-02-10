@@ -79,12 +79,15 @@ while /bin/true ; do
 		NEW_STATE_TSTAMP=$( date +%s)
 		DURATION=$(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP ))
 		LAST_STATE_TSTAMP="$NEW_STATE_TSTAMP"
-		if [ "$STATE" -ne 2 ] ; then
+		if [ "$STATE" -eq 2 ] ; then
+			echo " target $TARG responsive - previously in unknown state"
+			[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG responsive from $HOSTNAME - previously in unknown state"
+		else
 			if [ "$DURATION" -gt "$MAX_DOWN" ] ; then
 				MAX_DOWN="$DURATION"
 			fi
-			[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG responded to $HOSTNAME - down state lasted $DURATION seconds, max down $MAX_DOWN"
-			echo " target $TARG responded - down state lasted $DURATION seconds, max down $MAX_DOWN"
+			[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG responsive from $HOSTNAME - down state lasted $DURATION seconds, max down $MAX_DOWN"
+			echo " target $TARG responsive - down state lasted $DURATION seconds, max down $MAX_DOWN"
 		fi
 		STATE=1
 	fi
@@ -93,11 +96,14 @@ while /bin/true ; do
 		NEW_STATE_TSTAMP=$( date +%s)
 		DURATION=$(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP ))
 		LAST_STATE_TSTAMP="$NEW_STATE_TSTAMP"
-		if [ "$STATE" -ne 2 ] ; then
+		if [ "$STATE" -eq 2 ] ; then
+			echo " target $TARG unresponsive - previously in unknown state"
+			[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG unresponsive from $HOSTNAME - previously in unknown state"
+		else
 			if [ "$DURATION" -gt "$MAX_UP" ] ; then
 				MAX_UP="$DURATION"
 			fi
-			[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG unresponsive to $HOSTNAME - up state lasted $DURATION seconds, max up $MAX_UP"
+			[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG unresponsive from $HOSTNAME - up state lasted $DURATION seconds, max up $MAX_UP"
 			echo " target $TARG unresponsive - up state lasted $DURATION seconds, max up $MAX_UP"
 		fi
 		STATE=0
