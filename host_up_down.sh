@@ -22,6 +22,14 @@ EOF
 
 }
 
+# check if linux
+PING_WAIT_OPT="-w"
+if [ ! -f /etc/os-release ] || grep -q -i Linux /etc/os-release ; then
+	# probably on a Mac whose ping is more BSD-ish
+	PING_WAIT_OPT="-i"
+fi
+
+
 #### parameters
 while [ "$#" -gt 0 ] && [ "$1" != "" ] ; do
 	case "${1}" in
@@ -68,10 +76,10 @@ MAX_UP=0
 LAST_STATE_TSTAMP=$( date +%s)
 
 echo "Sleep count $PING_COUNT, sleep $SLEEP_PERIOD, wait $PING_WAIT"
-while /bin/true ; do
+while /usr/bin/true ; do
 	YMDHMS=$( date +%Y%m%d-%H:%M:%S )
-	ping -c "$PING_COUNT" -n -w "$PING_WAIT" "$TARG" > /dev/null
-	#ping -c "$PING_COUNT" -n -w "$PING_WAIT" "$TARG" | grep -q " 0% packet loss"
+	ping -c "$PING_COUNT" -n "$PING_WAIT_OPT" "$PING_WAIT" "$TARG" > /dev/null
+	#ping -c "$PING_COUNT" -n "$PING_WAIT_OPT" "$PING_WAIT" "$TARG" | grep -q " 0% packet loss"
 	PINGRES=$?
 
 	echo -n "$YMDHMS"
