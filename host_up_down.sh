@@ -11,11 +11,13 @@ DBG_LEVEL=0
 function print_usage() {
 	cat <<EOF
 Usage:
-    $0 [-h] [-d] [-l loghost] [-p period] -t target
+    $0 [-h] [-d] [-mp] [-md] [-l loghost] [-p period] -t target
 
 	-d	optional, increase debug level, use multiple times for more vebosity
 	-h	optional, print help (you are here)
 	-l	optional, log host, send a syslog message here, e.g. 192.168.1.1
+	-md	method is to dig the target - i.e dns lookup
+	-mp	method is to ping the target (the default)
 	-t	mandatory, ping target, e.g. ipv6.google.com
 	-p	optional, default period is $SLEEP_PERIOD secs
 EOF
@@ -31,6 +33,7 @@ fi
 
 
 #### parameters
+METHOD=ping	# by default, use ping; others are dig
 while [ "$#" -gt 0 ] && [ "$1" != "" ] ; do
 	case "${1}" in
 		"-d")
@@ -44,6 +47,12 @@ while [ "$#" -gt 0 ] && [ "$1" != "" ] ; do
 		"-l")
 			shift
 			LOGHOST="$1"
+		;;
+		"-md")
+			METHOD=dig
+		;;
+		"-mp")
+			METHOD=ping
 		;;
 		"-p")
 			shift
@@ -78,41 +87,55 @@ LAST_STATE_TSTAMP=$( date +%s)
 echo "Sleep count $PING_COUNT, sleep $SLEEP_PERIOD, wait $PING_WAIT"
 while /usr/bin/true ; do
 	YMDHMS=$( date +%Y%m%d-%H:%M:%S )
-	ping -c "$PING_COUNT" -n "$PING_WAIT_OPT" "$PING_WAIT" "$TARG" > /dev/null
-	#ping -c "$PING_COUNT" -n "$PING_WAIT_OPT" "$PING_WAIT" "$TARG" | grep -q " 0% packet loss"
-	PINGRES=$?
+	RESPONDED=1	# default code is a failure
+	case "$METHOD" in
+		"dig")
+			dig +short "$TARG" | grep -q -F '.'
+			RESPONDED=$?
+		;;
+		"ping")
+
+			ping -c "$PING_COUNT" -n "$PING_WAIT_OPT" "$PING_WAIT" "$TARG" > /dev/null
+			#ping -c "$PING_COUNT" -n "$PING_WAIT_OPT" "$PING_WAIT" "$TARG" | grep -q " 0% packet loss"
+			RESPONDED=$?
+		;;
+		*)
+			echo "Error, unknown host detection method"
+			exit 1
+		;;
+	esac
 
 	echo -n "$YMDHMS"
-	if [ $PINGRES -eq 0 ] && [ $STATE -ne 1 ] ; then
+	if [ $RESPONDED -eq 0 ] && [ $STATE -ne 1 ] ; then
 		NEW_STATE_TSTAMP=$( date +%s)
 		DURATION=$(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP ))
 		LAST_STATE_TSTAMP="$NEW_STATE_TSTAMP"
 		if [ "$STATE" -eq 2 ] ; then
-			echo " target $TARG responsive - previously in unknown state"
-			[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG responsive from $HOSTNAME - previously in unknown state"
+			echo " $METHOD target $TARG responsive - previously in unknown state"
+			[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "$METHOD target $TARG responsive from $HOSTNAME - previously in unknown state"
 		else
 			if [ "$DURATION" -gt "$MAX_DOWN" ] ; then
 				MAX_DOWN="$DURATION"
 			fi
-			[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG responsive from $HOSTNAME - down state lasted $DURATION seconds, max down $MAX_DOWN"
-			echo " target $TARG responsive - down state lasted $DURATION seconds, max down $MAX_DOWN"
+			[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "$METHOD target $TARG responsive from $HOSTNAME - down state lasted $DURATION seconds, max down $MAX_DOWN"
+			echo " $METHOD target $TARG responsive - down state lasted $DURATION seconds, max down $MAX_DOWN"
 		fi
 		STATE=1
 	fi
 
-	if [ $PINGRES -ne 0 ] && [ $STATE -ne 0 ] ; then
+	if [ $RESPONDED -ne 0 ] && [ $STATE -ne 0 ] ; then
 		NEW_STATE_TSTAMP=$( date +%s)
 		DURATION=$(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP ))
 		LAST_STATE_TSTAMP="$NEW_STATE_TSTAMP"
 		if [ "$STATE" -eq 2 ] ; then
-			echo " target $TARG unresponsive - previously in unknown state"
-			[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG unresponsive from $HOSTNAME - previously in unknown state"
+			echo " $METHOD target $TARG unresponsive - previously in unknown state"
+			[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "$METHOD target $TARG unresponsive from $HOSTNAME - previously in unknown state"
 		else
 			if [ "$DURATION" -gt "$MAX_UP" ] ; then
 				MAX_UP="$DURATION"
 			fi
-			[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "target $TARG unresponsive from $HOSTNAME - up state lasted $DURATION seconds, max up $MAX_UP"
-			echo " target $TARG unresponsive - up state lasted $DURATION seconds, max up $MAX_UP"
+			[ "$LOGHOST" != "" ] && logger -n "$LOGHOST" -p "$LOGFAC" "$METHOD target $TARG unresponsive from $HOSTNAME - up state lasted $DURATION seconds, max up $MAX_UP"
+			echo " $METHOD target $TARG unresponsive - up state lasted $DURATION seconds, max up $MAX_UP"
 		fi
 		STATE=0
 	fi
