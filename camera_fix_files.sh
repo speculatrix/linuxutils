@@ -1,5 +1,15 @@
 #!/bin/sh
 
+FILECOUNT=`ls | grep ARW | wc -l`
+if [ $FILECOUNT -gt 0 ] ; then
+	for X in *ARW
+	do
+		echo "Renaming ARW to arw"
+		Y=`echo $X|sed -e s'/ARW/arw/'`
+		mv -n $X $Y
+	done
+fi
+
 FILECOUNT=`ls | grep AVI | wc -l`
 if [ $FILECOUNT -gt 0 ] ; then
 	for X in *AVI
