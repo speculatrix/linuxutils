@@ -56,11 +56,11 @@ while [ "$#" -gt 0 ] && [ "$1" != "" ] ; do
 			DNSPROTO=tcp
 		;;
 		"-mdu")
-			METHOD=dig
-			DNSPROTO=udp
+			METHOD="dig"
+			DNSPROTO="udp"
 		;;
 		"-mp")
-			METHOD=ping
+			METHOD="ping"
 		;;
 		"-p")
 			shift
@@ -108,7 +108,7 @@ while /usr/bin/true ; do
 			fi
 			[ "$DBG_LEVEL" -gt 0 ] && set -x
 			dig_opt=""
-			[ "DNSPROTO" == "tcp" ] && dig_opt="+tcp"
+			[ "$DNSPROTO" == "tcp" ] && dig_opt="+tcp"
 			dig +short +retry=1 +timeout="$TIMEOUT" $dig_opt "$TARG" $VIA_ARG  | grep -q -F 'no servers could be reached'
 			RESPONDED=$(( 1 - $? ))
 			[ "$DBG_LEVEL" -gt 0 ] && set +x
