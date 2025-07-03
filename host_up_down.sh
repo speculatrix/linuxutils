@@ -4,7 +4,7 @@
 
 SLEEP_PERIOD=2		# default sleep period
 PING_COUNT=2		# how many pings to send
-PING_WAIT=2		# how long to wait for a reply
+TIMEOUT=2		# how long to wait for a reply
 LOGFAC="daemon.warn"	# log with this facility.priority
 DBG_LEVEL=0
 
@@ -13,13 +13,16 @@ function print_usage() {
 Usage:
     $0 [-h] [-d] [-mp] [-md] [-l loghost] [-p period] -t target
 
-	-d	optional, increase debug level, use multiple times for more vebosity
-	-h	optional, print help (you are here)
-	-l	optional, log host, send a syslog message here, e.g. 192.168.1.1
-	-md	method is to dig the target - i.e dns lookup
-	-mp	method is to ping the target (the default)
 	-t	mandatory, ping target, e.g. ipv6.google.com
+
+	-d	optional: increase debug level, use multiple times for more vebosity
+	-h	optional: print help (you are here)
+	-l	optional: log host, send a syslog message here, e.g. 192.168.1.1
+	-mdt	optional: method is to dig the target over tcp - i.e dns lookup
+	-mdu	optional: method is to dig the target over udp - i.e dns lookup
+	-mp	optional: method is to ping the target (the default)
 	-p	optional, default period is $SLEEP_PERIOD secs
+	-v	optional: via, used for the @ in dig if supplied
 EOF
 
 }
@@ -48,8 +51,13 @@ while [ "$#" -gt 0 ] && [ "$1" != "" ] ; do
 			shift
 			LOGHOST="$1"
 		;;
-		"-md")
+		"-mdt")
 			METHOD=dig
+			DNSPROTO=tcp
+		;;
+		"-mdu")
+			METHOD=dig
+			DNSPROTO=udp
 		;;
 		"-mp")
 			METHOD=ping
@@ -61,6 +69,10 @@ while [ "$#" -gt 0 ] && [ "$1" != "" ] ; do
 		"-t")
 			shift
 			TARG="$1"
+		;;
+		"-v")
+			shift
+			VIA="$1"
 		;;
 		# catchall
 		*)
@@ -84,19 +96,27 @@ MAX_UP=0
 
 LAST_STATE_TSTAMP=$( date +%s)
 
-echo "Sleep count $PING_COUNT, sleep $SLEEP_PERIOD, wait $PING_WAIT"
+echo "Sleep count $PING_COUNT, sleep $SLEEP_PERIOD, wait $TIMEOUT"
 while /usr/bin/true ; do
 	YMDHMS=$( date +%Y%m%d-%H:%M:%S )
 	RESPONDED=1	# default code is a failure
 	case "$METHOD" in
 		"dig")
-			dig +short "$TARG" | grep -q -F '.'
-			RESPONDED=$?
+			VIA_ARG=""
+			if [ "$VIA" != "" ] ; then
+				VIA_ARG="@$VIA"
+			fi
+			[ "$DBG_LEVEL" -gt 0 ] && set -x
+			dig_opt=""
+			[ "DNSPROTO" == "tcp" ] && dig_opt="+tcp"
+			dig +short +retry=1 +timeout="$TIMEOUT" $dig_opt "$TARG" $VIA_ARG  | grep -q -F 'no servers could be reached'
+			RESPONDED=$(( 1 - $? ))
+			[ "$DBG_LEVEL" -gt 0 ] && set +x
 		;;
 		"ping")
 
-			ping -c "$PING_COUNT" -n "$PING_WAIT_OPT" "$PING_WAIT" "$TARG" > /dev/null
-			#ping -c "$PING_COUNT" -n "$PING_WAIT_OPT" "$PING_WAIT" "$TARG" | grep -q " 0% packet loss"
+			ping -c "$PING_COUNT" -n "$PING_WAIT_OPT" "$TIMEOUT" "$TARG" > /dev/null
+			#ping -c "$PING_COUNT" -n "$PING_WAIT_OPT" "$TIMEOUT" "$TARG" | grep -q " 0% packet loss"
 			RESPONDED=$?
 		;;
 		*)
