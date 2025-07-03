@@ -99,7 +99,7 @@ LAST_STATE_TSTAMP=$( date +%s)
 echo "Sleep count $PING_COUNT, sleep $SLEEP_PERIOD, wait $TIMEOUT"
 while /usr/bin/true ; do
 	YMDHMS=$( date +%Y%m%d-%H:%M:%S )
-	RESPONDED=1	# default code is a failure
+	ERRORED=1	# default code is a failure
 	case "$METHOD" in
 		"dig")
 			VIA_ARG=""
@@ -110,14 +110,15 @@ while /usr/bin/true ; do
 			dig_opt=""
 			[ "$DNSPROTO" == "tcp" ] && dig_opt="+tcp"
 			dig +short +retry=1 +timeout="$TIMEOUT" $dig_opt "$TARG" $VIA_ARG  | grep -q -F 'no servers could be reached'
-			RESPONDED=$(( 1 - $? ))
+			ERRORED=$(( 1 - $? ))
 			[ "$DBG_LEVEL" -gt 0 ] && set +x
 		;;
 		"ping")
-
+			[ "$DBG_LEVEL" -gt 0 ] && set -x
 			ping -c "$PING_COUNT" -n "$PING_WAIT_OPT" "$TIMEOUT" "$TARG" > /dev/null
 			#ping -c "$PING_COUNT" -n "$PING_WAIT_OPT" "$TIMEOUT" "$TARG" | grep -q " 0% packet loss"
-			RESPONDED=$?
+			ERRORED=$?
+			[ "$DBG_LEVEL" -gt 0 ] && set +x
 		;;
 		*)
 			echo "Error, unknown host detection method"
@@ -126,7 +127,7 @@ while /usr/bin/true ; do
 	esac
 
 	echo -n "$YMDHMS"
-	if [ $RESPONDED -eq 0 ] && [ $STATE -ne 1 ] ; then
+	if [ $ERRORED -eq 0 ] && [ $STATE -ne 1 ] ; then
 		NEW_STATE_TSTAMP=$( date +%s)
 		DURATION=$(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP ))
 		LAST_STATE_TSTAMP="$NEW_STATE_TSTAMP"
@@ -143,7 +144,7 @@ while /usr/bin/true ; do
 		STATE=1
 	fi
 
-	if [ $RESPONDED -ne 0 ] && [ $STATE -ne 0 ] ; then
+	if [ $ERRORED -ne 0 ] && [ $STATE -ne 0 ] ; then
 		NEW_STATE_TSTAMP=$( date +%s)
 		DURATION=$(( NEW_STATE_TSTAMP - LAST_STATE_TSTAMP ))
 		LAST_STATE_TSTAMP="$NEW_STATE_TSTAMP"
