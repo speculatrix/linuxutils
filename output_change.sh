@@ -5,7 +5,7 @@ FILE_NEW=$( mktemp /tmp/output_change_XXXXXX.new.txt )
 
 CMD="$*"
 
-touch $FILE_OLD
+touch "$FILE_OLD"
 while /bin/date ; do
 	$CMD > "$FILE_NEW"
 	diff "$FILE_OLD" "$FILE_NEW"
