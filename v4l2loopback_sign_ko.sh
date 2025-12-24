@@ -21,34 +21,35 @@ if [ -f "/lib/modules/$KVER/extra/v4l2loopback/v4l2loopback.ko" ] ; then
 fi
 
 echo "# Files before"
-ls -la /lib/modules/$KVER/extra/v4l2loopback/*v4l2loop*
+ls -la "/lib/modules/$KVER/extra/v4l2loopback/" | grep v4l2loop
 md5sum /lib/modules/$KVER/extra/v4l2loopback/*v4l2loop*
 
 ### save and decompress the unsigned kernel module
-mv /lib/modules/$KVER/extra/v4l2loopback/v4l2loopback.ko.xz /lib/modules/$KVER/extra/v4l2loopback/v4l2loopback-unsigned.ko.xz
-xz -d < /lib/modules/$KVER/extra/v4l2loopback/v4l2loopback-unsigned.ko.xz > /lib/modules/$KVER/extra/v4l2loopback/v4l2loopback.ko
+mv "/lib/modules/$KVER/extra/v4l2loopback/v4l2loopback.ko.xz" "/lib/modules/$KVER/extra/v4l2loopback/v4l2loopback-unsigned.ko.xz"
+xz -d < "/lib/modules/$KVER/extra/v4l2loopback/v4l2loopback-unsigned.ko.xz" > "/lib/modules/$KVER/extra/v4l2loopback/v4l2loopback.ko"
 
 ### sign the kernel module
-/usr/src/kernels/$KVER/scripts/sign-file sha256 "$DKMS_DIR/$SIGNER".priv "$DKMS_DIR/$SIGNER".der /lib/modules/$KVER/extra/v4l2loopback/v4l2loopback.ko
+"/usr/src/kernels/$KVER/scripts/sign-file" sha256 "$DKMS_DIR/$SIGNER.priv" "$DKMS_DIR/$SIGNER.der" "/lib/modules/$KVER/extra/v4l2loopback/v4l2loopback.ko"
 
-if [ -f /lib/modules/$KVER/extra/v4l2loopback/v4l2loopback.ko ] ; then
+if [ -f "/lib/modules/$KVER/extra/v4l2loopback/v4l2loopback.ko" ] ; then
 	echo "Ok, v4l2loopback.ko exists"
-	if [ ! -s /lib/modules/$KVER/extra/v4l2loopback/v4l2loopback.ko ] ; then
+	if [ ! -s "/lib/modules/$KVER/extra/v4l2loopback/v4l2loopback.ko" ] ; then
 		echo "Error, the v4l2loopback.ko was an empty file"
 		exit 1
 	fi
 fi
 
 ### compress the signed module, the .ko is removed leaving the ko.xz
-xz /lib/modules/$KVER/extra/v4l2loopback/v4l2loopback.ko
+xz "/lib/modules/$KVER/extra/v4l2loopback/v4l2loopback.ko"
 
 echo "# Files before depmod"
-ls -la /lib/modules/$KVER/extra/v4l2loopback/*v4l2loop*
+ls -la "/lib/modules/$KVER/extra/v4l2loopback/" | grep v4l2loop
+md5sum /lib/modules/$KVER/extra/v4l2loopback/*v4l2loop*
 
 depmod -a
 
 echo "# Files After"
-ls -la /lib/modules/$KVER/extra/v4l2loopback/*v4l2loop*
+ls -la "/lib/modules/$KVER/extra/v4l2loopback/" | grep v4l2loop
 md5sum /lib/modules/$KVER/extra/v4l2loopback/*v4l2loop*
 
 # end v4l2loopback_sign_ko.sh
