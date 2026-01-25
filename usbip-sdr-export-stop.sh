@@ -1,5 +1,6 @@
 #!/bin/bash
 
-usbip list --local | grep -B 1 "SDRplay" | head -1 | awk '{print $3}'
+BUSID=$( usbip list --local | grep -B 1 "SDRplay" | head -1 | awk '{print $3}' | tee /dev/stderr )
 
-usbip detach --busid="$BUSID"
+usbip unbind --busid=$BUSID
+
