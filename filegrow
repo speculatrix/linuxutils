@@ -40,45 +40,53 @@ MB10=$(( 1024 * 1024 * 10 ))
 OLD=-1
 while [ 1 ] ; do
 	if [ ! -f "$FILENAME" ] ; then
-		echo "File has disappeared"
+		printf "File has disappeared\n"
 		exit 0
 	fi
 	NEW=`stat -c '%s' "$FILENAME"`
 	DDD=`date +%H:%M:%S`
 	sleep $PERIOD
 	if [ $OLD -ne -1 ] ; then
-		echo -n "Time: $DDD	Size: $NEW B  "
+		printf "Time: %8s  Size: %16d B,   " $DDD $NEW
 		NEWKB=$(( $NEW / 1024 ))
 		NEWMB=$(( $NEWKB / 1024 ))
-		echo -n "$NEWMB  MiB	"
+		if [ "$NEWKB" -lt 4096 ] ; then
+			printf "%10d KiB" $NEWKB
+		else
+			printf "%10d MiB" $NEWMB
+		fi
 
-		echo -n "Growth: "
+		printf "; Growth: "
 		DIFF=$(( $NEW - $OLD ))
-		DIFFKB=$(( $DIFF / 1024 ))
-		DIFFMB=$(( $DIFFKB / 1024 ))
+		DIFFKBS=$(( DIFF   / 1024 / PERIOD ))
+		DIFFMBS=$(( DIFFKB / 1024 / PERIOD ))
 
 		if [ $DIFF -gt $KB10 ] ; then
 			if [ $DIFF -gt $MB10 ] ; then
-				echo -n "$DIFFMB MiB	"
+				printf "%8d MiB/s" $DIFFMBS
 			else
-				echo -n "$DIFFKB KiB	"
+				printf "%8d KiB/s" $DIFFKBS
 			fi
 		else
-			echo -n "$DIFF B	"
+			printf "%8d B/s" $DIFF
 		fi
 
 
 		if [ "$EXPECTED" -gt 0 ] ; then
 			LEFTKB=$(( $EXPECTED - $NEWKB ))
-			echo -n "Remainder: $LEFTKB KB	"
+			printf "; Remainder: %4d KB" $LEFTKB
 
-			if [ $DIFFKB -ne 0 -a $LEFTKB -ne 0 ] ; then
-				DRTN=$(( $PERIOD * $LEFTKB / $DIFFKB ))
-				echo -n "Finish: $DRTN s"
+			if [ "$LEFTKB" -le 0 ] ; then
+				printf "; Finish: already?"
+			elif [ "$DIFFKBS" -eq 0 ] ; then
+				printf "; Finish: never?"
+			else
+				DRTN=$(( $PERIOD * $LEFTKB / $DIFFKBS ))
+				printf "; Finish: %d s" $DRTN
 			fi
 		fi
 
-		echo ""
+		printf "\n"
 	fi
 	OLD=$NEW
 done
